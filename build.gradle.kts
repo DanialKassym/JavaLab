@@ -1,6 +1,6 @@
 plugins {
 	java
-	id("org.springframework.boot") version "4.0.1"
+	id("org.springframework.boot") version "4.0.2"
 	id("io.spring.dependency-management") version "1.1.7"
 }
 
@@ -26,7 +26,7 @@ dependencies {
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	//testImplementation("org.springframework.security:spring-security-test")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-	implementation("org.postgresql:postgresql:42.7.7")
+	implementation("org.postgresql:postgresql:42.7.9")
 	implementation ("org.springframework.data:spring-data-jdbc")
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 }
