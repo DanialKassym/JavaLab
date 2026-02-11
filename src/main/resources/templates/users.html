@@ -48,6 +48,7 @@
     <tr th:if="${#lists.isEmpty(users)}">
         <td colspan="6">No users yet.</td>
     </tr>
+
     <tr th:each="user : ${users}">
         <td><a th:href="@{/users(id=${user.id})}" th:text="${user.id}">1</a></td>
         <td th:text="${user.name}">Name</td>
@@ -58,6 +59,7 @@
             </form>
         </td>
     </tr>
+
     </tbody>
 </table>
 </body>
