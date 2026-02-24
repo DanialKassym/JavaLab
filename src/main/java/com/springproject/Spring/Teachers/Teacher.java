@@ -16,8 +16,8 @@ public class Teacher {
     @Column(nullable = false)
     private String teacherName;
 
-    @OneToOne
-    @JoinColumn(name="user_id", nullable = false, unique = true)
+    @ManyToOne
+    @JoinColumn(name="user_id", nullable = false)
     private Users user;
 
     @OneToMany(mappedBy = "teacher")

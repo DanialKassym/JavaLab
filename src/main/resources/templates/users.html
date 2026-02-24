@@ -25,8 +25,8 @@
     <input type="hidden" name="_method" value="PUT" th:if="${editMode}"/>
 
     <div class="form-row">
-        <label for="userName">User Name</label>
-        <input id="userName" type="text" th:field="*{userName}"/>
+        <label for="name">User Name</label>
+        <input id="name" type="text" th:field="*{name}"/>
     </div>
 
     <div class="form-actions">
@@ -40,7 +40,7 @@
     <thead>
     <tr>
         <th>ID</th>
-        <th>User Name</th>
+        <th>Name</th>
         <th>Delete</th>
     </tr>
     </thead>
@@ -50,7 +50,7 @@
     </tr>
     <tr th:each="user : ${users}">
         <td><a th:href="@{/users(id=${user.id})}" th:text="${user.id}">1</a></td>
-        <td th:text="${user.userName}">User Name</td>
+        <td th:text="${user.name}">Name</td>
         <td>
             <form class="inline" th:action="@{/users/{id}(id=${user.id})}" method="post">
                 <input type="hidden" name="_method" value="DELETE"/>

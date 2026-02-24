@@ -68,7 +68,8 @@ public class TeachersController {
                          @RequestParam Long userId,
                          @RequestParam(required = false) List<Long> courseIds) {
 
-        Teacher teacherModel = teachersRepository.getById(id);
+        Teacher teacherModel = teachersRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Teacher not found"));
         teacherModel.setTeacherName(teacherForm.getTeacherName());
         teacherModel.setUser(usersRepository.getById(userId));
 

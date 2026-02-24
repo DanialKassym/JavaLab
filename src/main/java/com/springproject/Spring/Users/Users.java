@@ -1,11 +1,11 @@
 package com.springproject.Spring.Users;
-import jakarta.persistence.*;
-import org.hibernate.annotations.CreationTimestamp;
 
-import java.util.Date;
+import com.springproject.Spring.Students.Student;
+import com.springproject.Spring.Teachers.Teacher;
+import jakarta.persistence.*;
 
 @Entity
-@Table(name = "users")
+@Table(name="users")
 public class Users {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -14,12 +14,11 @@ public class Users {
     @Column(nullable = false, unique = true)
     private String name;
 
-    public Users() {}
+    @OneToOne(mappedBy = "user")
+    private Student student;
 
-    public Users(Long id, String name) {
-        this.id = id;
-        this.name = name;
-    }
+    @OneToOne(mappedBy = "user")
+    private Teacher teacher;
 
     public Long getId() {
         return id;
@@ -35,5 +34,21 @@ public class Users {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public Student getStudent() {
+        return student;
+    }
+
+    public void setStudent(Student student) {
+        this.student = student;
+    }
+
+    public Teacher getTeacher() {
+        return teacher;
+    }
+
+    public void setTeacher(Teacher teacher) {
+        this.teacher = teacher;
     }
 }

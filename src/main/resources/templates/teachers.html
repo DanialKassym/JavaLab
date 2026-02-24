@@ -38,7 +38,7 @@
         <select name="userId" required>
             <option th:each="u : ${users}"
                     th:value="${u.id}"
-                    th:text="${u.userName}">
+                    th:text="${u.name}">
             </option>
         </select>
     </div>
@@ -82,7 +82,7 @@
                th:text="${teacher.id}">1</a>
         </td>
         <td th:text="${teacher.teacherName}">Teacher Name</td>
-        <td th:text="${teacher.user.userName}">username</td>
+        <td th:text="${teacher.user.name}">username</td>
         <td>
             <span th:if="${#lists.isEmpty(teacher.courses)}">—</span>
 
