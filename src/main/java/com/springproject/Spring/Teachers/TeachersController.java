@@ -2,7 +2,12 @@ package com.springproject.Spring.Teachers;
 
 import com.springproject.Spring.Courses.Course;
 import com.springproject.Spring.Courses.CoursesRepository;
+import com.springproject.Spring.Students.Student;
+import com.springproject.Spring.Students.StudentsController;
+import com.springproject.Spring.Students.StudentsRepository;
 import com.springproject.Spring.Users.UsersRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -16,16 +21,19 @@ import java.util.Set;
 @RequestMapping("/teachers")
 public class TeachersController {
 
+    private static final Logger logger = LoggerFactory.getLogger(StudentsController.class);
     private final TeachersRepository teachersRepository;
     private final UsersRepository usersRepository;
     private final CoursesRepository courseRepository;
+    private final StudentsRepository studentRepository;
 
     public TeachersController(TeachersRepository teachersRepository,
                               UsersRepository usersRepository,
-                              CoursesRepository courseRepository) {
+                              CoursesRepository courseRepository, StudentsRepository studentRepository) {
         this.teachersRepository = teachersRepository;
         this.usersRepository = usersRepository;
         this.courseRepository = courseRepository;
+        this.studentRepository = studentRepository;
     }
 
     // READ + FORM
@@ -51,13 +59,17 @@ public class TeachersController {
     public String create(Teacher teacher,
     @RequestParam Long userId,
                          @RequestParam(required = false) List<Long> courseIds) {
-        teacher.setUser(usersRepository.getById(userId));
 
-        if (courseIds != null) {
+        Student student = studentRepository.getById(userId);
+        if (userId.equals(student.getId())){
+            logger.info("The teacher you are trying to assign is already student");
+            return "redirect:/teachers";
+        }
+        if (courseIds != null ) {
             List<Course> courses = new ArrayList<>(courseRepository.findAllById(courseIds));
             teacher.setCourses(courses);
         }
-
+        teacher.setUser(usersRepository.getById(userId));
         teachersRepository.save(teacher);
         return "redirect:/teachers";
     }
