@@ -9,6 +9,7 @@ import com.springproject.Spring.Users.UsersRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
@@ -56,12 +57,12 @@ public class TeachersController {
     }
 
     @PostMapping
+    @Transactional
     public String create(Teacher teacher,
     @RequestParam Long userId,
                          @RequestParam(required = false) List<Long> courseIds) {
 
-        Student student = studentRepository.getById(userId);
-        if (userId.equals(student.getId())){
+        if (studentRepository.existsById(userId)){
             logger.info("The teacher you are trying to assign is already student");
             return "redirect:/teachers";
         }
