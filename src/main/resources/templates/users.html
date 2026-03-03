@@ -24,12 +24,34 @@
 <form th:object="${form}" th:action="${editMode} ? @{/users/{id}(id=${form.id})} : @{/users}" method="post">
     <input type="hidden" name="_method" value="PUT" th:if="${editMode}"/>
 
-    <div class="form-row">
-        <label for="name">User Name</label>
-        <input id="name" type="text" th:field="*{name}"/>
+    <div>
+        <label for="userName">User Name</label>
+        <input id="userName" type="text" th:field="*{userName}"/>
+        <span th:if="${#fields.hasErrors('userName')}" th:errors="*{userName}"></span>
     </div>
 
-    <div class="form-actions">
+    <div>
+        <label for="email">Email</label>
+        <input id="email" type="email" th:field="*{email}"/>
+        <span th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></span>
+    </div>
+
+    <div>
+        <label for="password">Password</label>
+        <input id="password" type="password" th:field="*{password}"/>
+        <span th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></span>
+    </div>
+
+    <div>
+        <label for="role">Role</label>
+        <select id="role" th:field="*{role}">
+            <option value="">Select role</option>
+            <option th:each="role : ${roles}" th:value="${role}" th:text="${role}"></option>
+        </select>
+        <span th:if="${#fields.hasErrors('role')}" th:errors="*{role}"></span>
+    </div>
+
+    <div>
         <button type="submit" th:text="${editMode} ? 'Update' : 'Create'">Create</button>
         <a th:if="${editMode}" th:href="@{/users}">Cancel</a>
     </div>
@@ -40,19 +62,23 @@
     <thead>
     <tr>
         <th>ID</th>
-        <th>Name</th>
+        <th>User Name</th>
+        <th>Email</th>
+        <th>Role</th>
         <th>Delete</th>
     </tr>
     </thead>
     <tbody>
     <tr th:if="${#lists.isEmpty(users)}">
-        <td colspan="6">No users yet.</td>
+        <td colspan="5">No users yet.</td>
     </tr>
     <tr th:each="user : ${users}">
         <td><a th:href="@{/users(id=${user.id})}" th:text="${user.id}">1</a></td>
-        <td th:text="${user.name}">Name</td>
+        <td th:text="${user.userName}">User Name</td>
+        <td th:text="${user.email}">email@example.com</td>
+        <td th:text="${user.role}">ADMIN</td>
         <td>
-            <form class="inline" th:action="@{/users/{id}(id=${user.id})}" method="post">
+            <form th:action="@{/users/{id}(id=${user.id})}" method="post">
                 <input type="hidden" name="_method" value="DELETE"/>
                 <button type="submit">Delete</button>
             </form>

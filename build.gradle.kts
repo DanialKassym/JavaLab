@@ -29,6 +29,10 @@ dependencies {
 	implementation("org.postgresql:postgresql:42.7.9")
 	implementation ("org.springframework.data:spring-data-jdbc")
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+	implementation("org.springframework.boot:spring-boot-starter-validation")
+	compileOnly("org.projectlombok:lombok")
+	annotationProcessor("org.projectlombok:lombok")
+	testImplementation("org.springframework.boot:spring-boot-starter-validation-test")
 }
 
 tasks.withType<Test> {
