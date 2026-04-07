@@ -1,7 +1,7 @@
 package com.springproject.Spring.domain.entity;
 
-import com.springproject.Spring.domain.enums.Department;
 import jakarta.persistence.*;
+import com.springproject.Spring.domain.enums.Department;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
