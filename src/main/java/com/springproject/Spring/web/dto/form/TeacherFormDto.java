@@ -1,7 +1,11 @@
 package com.springproject.Spring.web.dto.form;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import com.springproject.Spring.domain.enums.Department;
-import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -30,5 +34,6 @@ public class TeacherFormDto {
     @NotNull(message = "User is required")
     private Long userId;
 
+    @Size(max = 1000, message = "Too many courses selected")
     private List<Long> courseIds;
 }

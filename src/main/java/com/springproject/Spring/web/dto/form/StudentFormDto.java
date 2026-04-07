@@ -1,6 +1,12 @@
 package com.springproject.Spring.web.dto.form;
 
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -29,6 +35,7 @@ public class StudentFormDto {
     private Double gpa;
 
     @NotBlank(message = "Group name is required")
+    @Size(min = 2, max = 30, message = "Group name must be between 2 and 30 characters")
     private String groupName;
 
     @NotNull(message = "User is required")
