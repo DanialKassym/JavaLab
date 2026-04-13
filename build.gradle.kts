@@ -32,7 +32,7 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-validation")
 	compileOnly("org.projectlombok:lombok")
 	annotationProcessor("org.projectlombok:lombok")
-	implementation("org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.4")
+	implementation("org.mybatis.spring.boot:mybatis-spring-boot-starter:4.0.0")
 	testImplementation("org.springframework.boot:spring-boot-starter-validation-test")
 }
 
