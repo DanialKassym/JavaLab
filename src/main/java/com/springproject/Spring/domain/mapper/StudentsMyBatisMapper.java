@@ -4,12 +4,10 @@ import com.springproject.Spring.domain.entity.Course;
 import com.springproject.Spring.domain.entity.Student;
 import com.springproject.Spring.domain.entity.User;
 import org.apache.ibatis.annotations.*;
-import org.mybatis.spring.annotation.MapperScan;
 
 import java.util.List;
 
 @Mapper
-@MapperScan
 public interface StudentsMyBatisMapper {
 
     @Select("""

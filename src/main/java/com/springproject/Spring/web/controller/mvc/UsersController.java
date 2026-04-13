@@ -24,7 +24,7 @@ public class UsersController {
     @GetMapping
     public String read(@RequestParam(name = "id", required = false) Long id,
                        @ModelAttribute("searchForm") UserSearchForm searchForm,
-                       @PageableDefault(size = 5) Pageable pageable,
+                       @PageableDefault(size = 10) Pageable pageable,
                        Model model) {
         model.addAttribute("editMode", id != null);
         model.addAttribute("form", userService.getForm(id));
@@ -62,7 +62,7 @@ public class UsersController {
     private String renderFormWithErrors(Model model, UserFormDto form, boolean editMode) {
         model.addAttribute("editMode", editMode);
         model.addAttribute("form", form);
-        fillCommonAttributes(model, new UserSearchForm(), Pageable.ofSize(5));
+        fillCommonAttributes(model, new UserSearchForm(), Pageable.ofSize(10));
         return "users";
     }
 

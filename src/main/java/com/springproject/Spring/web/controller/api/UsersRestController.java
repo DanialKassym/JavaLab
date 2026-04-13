@@ -22,7 +22,7 @@ public class UsersRestController {
 
     @GetMapping
     public Page<UserGridDto> read(UserSearchForm searchForm,
-                                  @PageableDefault(size = 5) Pageable pageable) {
+                                  @PageableDefault(size = 10) Pageable pageable) {
         return userService.search(searchForm, pageable);
     }
 
