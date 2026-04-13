@@ -1,32 +1,35 @@
-package com.springproject.Spring.web.controller.api;
+package com.springproject.Spring.web.controller.mvc;
 
+import jakarta.validation.Valid;
 import com.springproject.Spring.domain.enums.Department;
 import com.springproject.Spring.service.TeacherService;
 import com.springproject.Spring.web.dto.form.TeacherFormDto;
+import com.springproject.Spring.web.dto.search.TeacherSearchForm;
 import com.springproject.Spring.web.validations.BindingResultValidationUtils;
 import com.springproject.Spring.web.validations.TeacherFormValidator;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 @Controller
-@RequestMapping("/teachers")
 @RequiredArgsConstructor
+@RequestMapping("/teachers")
 public class TeachersController {
     private final TeacherService teacherService;
     private final TeacherFormValidator teacherFormValidator;
 
     @GetMapping
-    public String read(@RequestParam(name = "id", required = false) Long id, Model model) {
+    public String read(@RequestParam(name = "id", required = false) Long id,
+                       @ModelAttribute("searchForm") TeacherSearchForm searchForm,
+                       @PageableDefault(size = 10) Pageable pageable,
+                       Model model) {
         model.addAttribute("editMode", id != null);
         model.addAttribute("form", teacherService.getForm(id));
-        model.addAttribute("teachers", teacherService.findAllView());
-        model.addAttribute("users", teacherService.findAllUsers());
-        model.addAttribute("courses", teacherService.findAllCourses());
-        model.addAttribute("departments", Department.values());
+        fillCommonAttributes(model, searchForm, pageable);
         return "teachers";
     }
 
@@ -60,10 +63,15 @@ public class TeachersController {
     private String renderFormWithErrors(Model model, TeacherFormDto form, boolean editMode) {
         model.addAttribute("editMode", editMode);
         model.addAttribute("form", form);
-        model.addAttribute("teachers", teacherService.findAllView());
+        fillCommonAttributes(model, new TeacherSearchForm(), Pageable.ofSize(10));
+        return "teachers";
+    }
+
+    private void fillCommonAttributes(Model model, TeacherSearchForm form, Pageable pageable) {
+        model.addAttribute("page", teacherService.search(form, pageable));
+        model.addAttribute("searchForm", form);
         model.addAttribute("users", teacherService.findAllUsers());
         model.addAttribute("courses", teacherService.findAllCourses());
         model.addAttribute("departments", Department.values());
-        return "teachers";
     }
 }

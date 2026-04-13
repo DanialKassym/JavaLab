@@ -3,6 +3,7 @@ package com.springproject.Spring.service;
 import com.springproject.Spring.domain.entity.Course;
 import com.springproject.Spring.domain.entity.Student;
 import com.springproject.Spring.domain.entity.User;
+import com.springproject.Spring.domain.mapper.StudentsMyBatisMapper;
 import com.springproject.Spring.domain.repository.CoursesRepository;
 import com.springproject.Spring.domain.repository.StudentsRepository;
 import com.springproject.Spring.domain.repository.UsersRepository;
@@ -11,36 +12,83 @@ import com.springproject.Spring.web.converter.StudentConverter;
 import com.springproject.Spring.web.dto.form.StudentFormDto;
 import com.springproject.Spring.web.dto.grid.CourseGridDto;
 import com.springproject.Spring.web.dto.grid.UserGridDto;
+import com.springproject.Spring.web.dto.search.StudentSearchForm;
 import com.springproject.Spring.web.dto.view.StudentViewDto;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Service
 @Transactional
 @RequiredArgsConstructor
 public class StudentService {
+    private static final String DEFAULT_SORT = "studentName";
+    private static final Map<String, String> SORT_COLUMN_MAPPING = Map.of(
+            "id", "id",
+            "studentName", "student_name",
+            "age", "age",
+            "groupName", "group_name",
+            "gpa", "gpa"
+    );
+
     private final StudentsRepository studentRepository;
     private final UsersRepository userRepository;
     private final CoursesRepository courseRepository;
+    private final StudentsMyBatisMapper studentsMyBatisMapper;
     private final StudentConverter studentConverter;
 
-    public List<StudentViewDto> findAllView() {
-        return studentRepository.findAll().stream().map(studentConverter::toViewDto).toList();
+    @Transactional(readOnly = true)
+    public Page<StudentViewDto> search(StudentSearchForm form, Pageable pageable) {
+        String requestedSortBy = form.getSortBy() == null ? DEFAULT_SORT : form.getSortBy();
+        String sortBy = SORT_COLUMN_MAPPING.getOrDefault(requestedSortBy, SORT_COLUMN_MAPPING.get(DEFAULT_SORT));
+        Sort.Direction direction = form.getSortDirection() == null ? Sort.Direction.ASC : form.getSortDirection();
+
+        List<Student> students = studentsMyBatisMapper.findStudents(
+                form.getName(),
+                form.getGroupName(),
+                form.getAgeFrom(),
+                form.getAgeTo(),
+                form.getGpaFrom(),
+                form.getGpaTo(),
+                sortBy,
+                direction.name(),
+                pageable.getPageSize(),
+                pageable.getOffset()
+        );
+
+        long total = studentsMyBatisMapper.countStudents(
+                form.getName(),
+                form.getGroupName(),
+                form.getAgeFrom(),
+                form.getAgeTo(),
+                form.getGpaFrom(),
+                form.getGpaTo()
+        );
+
+        return new PageImpl<>(students, pageable, total)
+                .map(studentConverter::toViewDto);
     }
 
+    @Transactional(readOnly = true)
     public List<UserGridDto> findAllUsers() {
         return userRepository.findAll().stream().map(studentConverter::toUserGridDto).toList();
     }
 
+    @Transactional(readOnly = true)
     public List<CourseGridDto> findAllCourses() {
         return courseRepository.findAll().stream().map(studentConverter::toCourseGridDto).toList();
     }
 
+    @Transactional(readOnly = true)
     public StudentFormDto getForm(Long id) {
         return id == null ? new StudentFormDto() : studentConverter.toFormDto(findById(id));
     }
@@ -70,6 +118,7 @@ public class StudentService {
         studentRepository.delete(student);
     }
 
+    @Transactional(readOnly = true)
     public Student findById(Long id) {
         return studentRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Student not found with id: " + id));
     }

@@ -6,13 +6,20 @@ import com.springproject.Spring.domain.entity.Teacher;
 import com.springproject.Spring.domain.repository.CoursesRepository;
 import com.springproject.Spring.domain.repository.StudentsRepository;
 import com.springproject.Spring.domain.repository.TeachersRepository;
+import com.springproject.Spring.domain.specification.CourseSpecification;
+import com.springproject.Spring.exception.CourseLimitExceededException;
 import com.springproject.Spring.exception.EntityNotFoundException;
 import com.springproject.Spring.web.converter.CourseConverter;
 import com.springproject.Spring.web.dto.form.CourseFormDto;
 import com.springproject.Spring.web.dto.grid.StudentGridDto;
 import com.springproject.Spring.web.dto.grid.TeacherGridDto;
+import com.springproject.Spring.web.dto.search.CourseSearchForm;
 import com.springproject.Spring.web.dto.view.CourseViewDto;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,23 +31,46 @@ import java.util.Set;
 @Transactional
 @RequiredArgsConstructor
 public class CourseService {
+    private static final String DEFAULT_SORT = "courseName";
+    private static final Set<String> ALLOWED_SORT_FIELDS = Set.of("courseName", "maxStudents", "teacher");
+
     private final CoursesRepository coursesRepository;
     private final TeachersRepository teachersRepository;
     private final StudentsRepository studentsRepository;
     private final CourseConverter courseConverter;
 
-    public List<CourseViewDto> findAllView() {
-        return coursesRepository.findAll().stream().map(courseConverter::toViewDto).toList();
+    @Transactional(readOnly = true)
+    public Page<CourseViewDto> search(CourseSearchForm form, Pageable pageable) {
+        Sort sort = pageable.getSort().isSorted() ? pageable.getSort() : Sort.by(Sort.Direction.ASC, DEFAULT_SORT);
+
+        if (form.getSortBy() != null && !form.getSortBy().isBlank()) {
+            String requestedSortBy = form.getSortBy();
+            if (!ALLOWED_SORT_FIELDS.contains(requestedSortBy)) {
+                throw new EntityNotFoundException("Invalid sort field: " + requestedSortBy);
+            }
+
+            Sort.Direction direction = form.getSortDirection() == null ? Sort.Direction.ASC : form.getSortDirection();
+            String sortProperty = "teacher".equals(requestedSortBy) ? "teacher.teacherName" : requestedSortBy;
+            sort = Sort.by(direction, sortProperty);
+        }
+
+        Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
+
+        return coursesRepository.findAll(CourseSpecification.withFilters(form), sortedPageable)
+                .map(courseConverter::toViewDto);
     }
 
+    @Transactional(readOnly = true)
     public List<TeacherGridDto> findAllTeachers() {
         return teachersRepository.findAll().stream().map(courseConverter::toTeacherGridDto).toList();
     }
 
+    @Transactional(readOnly = true)
     public List<StudentGridDto> findAllStudents() {
         return studentsRepository.findAll().stream().map(courseConverter::toStudentGridDto).toList();
     }
 
+    @Transactional(readOnly = true)
     public CourseFormDto getForm(Long id) {
         return id == null ? new CourseFormDto() : courseConverter.toFormDto(findById(id));
     }
@@ -59,17 +89,15 @@ public class CourseService {
 
     public void delete(Long id) {
         Course course = findById(id);
-        if (course.getStudents() != null) {
-            for (Student student : course.getStudents()) {
-                if (student.getCourses() != null) {
-                    student.getCourses().remove(course);
-                }
-            }
-            course.getStudents().clear();
+        Set<Student> assignedStudents = new HashSet<>(course.getStudents());
+        for (Student student : assignedStudents) {
+            student.getCourses().remove(course);
         }
-        coursesRepository.deleteById(id);
+        course.getStudents().clear();
+        coursesRepository.delete(course);
     }
 
+    @Transactional(readOnly = true)
     public Course findById(Long id) {
         return coursesRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Course not found with id: " + id));
     }
@@ -78,26 +106,28 @@ public class CourseService {
         Teacher teacher = teachersRepository.findById(form.getTeacherId())
                 .orElseThrow(() -> new EntityNotFoundException("Teacher not found with id: " + form.getTeacherId()));
 
-        if (course.getStudents() != null) {
-            for (Student oldStudent : course.getStudents()) {
-                if (oldStudent.getCourses() != null) {
-                    oldStudent.getCourses().remove(course);
-                }
-            }
-            course.getStudents().clear();
+        List<Long> studentIds = form.getStudentIds() == null ? List.of() : form.getStudentIds();
+        Set<Student> students = new HashSet<>(studentsRepository.findAllById(studentIds));
+
+        if (students.size() != new HashSet<>(studentIds).size()) {
+            throw new EntityNotFoundException("One or more students not found");
         }
 
-        Set<Student> students = new HashSet<>();
-        if (form.getStudentIds() != null) {
-            students = new HashSet<>(studentsRepository.findAllById(form.getStudentIds()));
+        if (students.size() > form.getMaxStudents()) {
+            throw new CourseLimitExceededException("Student count exceeds maximum allowed for this course");
         }
 
-        courseConverter.applyFormToEntity(form, course, teacher, students);
+        Set<Student> oldStudents = new HashSet<>(course.getStudents());
+        for (Student oldStudent : oldStudents) {
+            oldStudent.getCourses().remove(course);
+        }
+
+        courseConverter.applyFormToEntity(form, course, teacher, new HashSet<>());
 
         for (Student student : students) {
-            Set<Course> studentCourses = student.getCourses() == null ? new HashSet<>() : student.getCourses();
-            studentCourses.add(course);
-            student.setCourses(studentCourses);
+            student.getCourses().add(course);
         }
+
+        course.setStudents(students);
     }
 }

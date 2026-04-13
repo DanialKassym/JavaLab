@@ -21,6 +21,35 @@
 
 <h1>Students</h1>
 
+<form method="get" th:object="${searchForm}">
+    <label for="name">Name</label>
+    <input id="name" type="text" th:field="*{name}" placeholder="Name">
+    <label for="groupName">Group name</label>
+    <input id="groupName" type="text" th:field="*{groupName}" placeholder="Group name">
+    <label for="ageFrom">Age from</label>
+    <input id="ageFrom" type="number" th:field="*{ageFrom}" placeholder="Age from">
+    <label for="ageTo">Age to</label>
+    <input id="ageTo" type="number" th:field="*{ageTo}" placeholder="Age to">
+    <label for="gpaFrom">GPA from</label>
+    <input id="gpaFrom" type="number" step="0.01" th:field="*{gpaFrom}" placeholder="GPA from">
+    <label for="gpaTo">GPA to</label>
+    <input id="gpaTo" type="number" step="0.01" th:field="*{gpaTo}" placeholder="GPA to">
+    <label for="sortBy">Sort by</label>
+    <select id="sortBy" th:field="*{sortBy}">
+        <option value="id">ID</option>
+        <option value="studentName">Name</option>
+        <option value="age">Age</option>
+        <option value="groupName">Group</option>
+        <option value="gpa">GPA</option>
+    </select>
+    <label for="sortDirection">Sort direction</label>
+    <select id="sortDirection" th:field="*{sortDirection}">
+        <option value="ASC">ASC</option>
+        <option value="DESC">DESC</option>
+    </select>
+    <button type="submit">Filter</button>
+</form>
+
 <h2 th:text="${editMode} ? 'Edit Student' : 'Create Student'">Create Student</h2>
 
 <form th:object="${form}" th:action="${editMode} ? @{/students/{id}(id=${form.id})} : @{/students}" method="post">
@@ -79,21 +108,29 @@
     <tr>
         <th>ID</th>
         <th>Student name</th>
+        <th>Age</th>
+        <th>Group</th>
+        <th>GPA</th>
         <th>User</th>
+        <th>Courses Count</th>
         <th>Courses</th>
         <th>Delete</th>
     </tr>
     </thead>
     <tbody>
 
-    <tr th:if="${#lists.isEmpty(students)}">
-        <td colspan="5">No students yet.</td>
+    <tr th:if="${#lists.isEmpty(page.content)}">
+        <td colspan="9">No students yet.</td>
     </tr>
 
-    <tr th:each="student : ${students}">
+    <tr th:each="student : ${page.content}">
         <td><a th:href="@{/students(id=${student.id})}" th:text="${student.id}">1</a></td>
         <td th:text="${student.studentName}">Student</td>
-        <td th:text="${student.user.userName}">User</td>
+        <td th:text="${student.age}">0</td>
+        <td th:text="${student.groupName}">Group</td>
+        <td th:text="${student.gpa}">0.0</td>
+        <td th:text="${student.user != null ? student.user.userName : '-'}">User</td>
+        <td th:text="${#lists.size(student.courses)}">0</td>
         <td>
             <span th:if="${#lists.isEmpty(student.courses)}">—</span>
             <ul th:if="${!#lists.isEmpty(student.courses)}">
@@ -110,6 +147,10 @@
 
     </tbody>
 </table>
+
+<a th:if="${page.hasPrevious()}" th:href="@{/students(page=${page.number-1})}">Previous</a>
+<span th:text="${page.number + 1}"></span>
+<a th:if="${page.hasNext()}" th:href="@{/students(page=${page.number+1})}">Next</a>
 
 </body>
 </html>

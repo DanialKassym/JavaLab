@@ -1,35 +1,44 @@
-package com.springproject.Spring.web.controller.api;
+package com.springproject.Spring.web.controller.mvc;
 
+import jakarta.validation.Valid;
 import com.springproject.Spring.service.CourseService;
 import com.springproject.Spring.web.dto.form.CourseFormDto;
+import com.springproject.Spring.web.dto.search.CourseSearchForm;
 import com.springproject.Spring.web.validations.BindingResultValidationUtils;
 import com.springproject.Spring.web.validations.CourseFormValidator;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 @Controller
-@RequestMapping("/courses")
 @RequiredArgsConstructor
+@RequestMapping("/courses")
 public class CoursesController {
     private final CourseService courseService;
     private final CourseFormValidator courseFormValidator;
 
+    @InitBinder("form")
+    public void initBinder(org.springframework.web.bind.WebDataBinder binder) {
+        binder.addValidators(courseFormValidator);
+    }
+
     @GetMapping
-    public String read(@RequestParam(name = "id", required = false) Long id, Model model) {
+    public String read(@RequestParam(name = "id", required = false) Long id,
+                       @ModelAttribute("searchForm") CourseSearchForm searchForm,
+                       @PageableDefault(size = 10) Pageable pageable,
+                       Model model) {
         model.addAttribute("editMode", id != null);
         model.addAttribute("form", courseService.getForm(id));
-        model.addAttribute("courses", courseService.findAllView());
-        model.addAttribute("teachers", courseService.findAllTeachers());
-        model.addAttribute("students", courseService.findAllStudents());
+        fillCommonAttributes(model, searchForm, pageable);
         return "courses";
     }
 
     @PostMapping
-    public String create(@ModelAttribute("form") CourseFormDto form, BindingResult bindingResult, Model model) {
-        courseFormValidator.validate(form, bindingResult, form.getId());
+    public String create(@Valid @ModelAttribute("form") CourseFormDto form, BindingResult bindingResult, Model model) {
         if (BindingResultValidationUtils.hasErrors(bindingResult)) {
             return renderFormWithErrors(model, form, false);
         }
@@ -38,8 +47,7 @@ public class CoursesController {
     }
 
     @PutMapping("/{id}")
-    public String update(@PathVariable Long id, @ModelAttribute("form") CourseFormDto form, BindingResult bindingResult, Model model) {
-        courseFormValidator.validate(form, bindingResult, form.getId());
+    public String update(@PathVariable Long id, @Valid @ModelAttribute("form") CourseFormDto form, BindingResult bindingResult, Model model) {
         if (BindingResultValidationUtils.hasErrors(bindingResult)) {
             form.setId(id);
             return renderFormWithErrors(model, form, true);
@@ -57,9 +65,14 @@ public class CoursesController {
     private String renderFormWithErrors(Model model, CourseFormDto form, boolean editMode) {
         model.addAttribute("editMode", editMode);
         model.addAttribute("form", form);
-        model.addAttribute("courses", courseService.findAllView());
+        fillCommonAttributes(model, new CourseSearchForm(), Pageable.ofSize(10));
+        return "courses";
+    }
+
+    private void fillCommonAttributes(Model model, CourseSearchForm form, Pageable pageable) {
+        model.addAttribute("page", courseService.search(form, pageable));
+        model.addAttribute("searchForm", form);
         model.addAttribute("teachers", courseService.findAllTeachers());
         model.addAttribute("students", courseService.findAllStudents());
-        return "courses";
     }
 }

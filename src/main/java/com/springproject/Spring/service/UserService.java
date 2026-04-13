@@ -1,28 +1,56 @@
 package com.springproject.Spring.service;
 
 import com.springproject.Spring.domain.entity.User;
+import com.springproject.Spring.domain.enums.UserRole;
 import com.springproject.Spring.domain.repository.UsersRepository;
 import com.springproject.Spring.exception.EntityNotFoundException;
 import com.springproject.Spring.web.converter.UserConverter;
 import com.springproject.Spring.web.dto.form.UserFormDto;
 import com.springproject.Spring.web.dto.grid.UserGridDto;
+import com.springproject.Spring.web.dto.search.UserSearchForm;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import java.util.Set;
 
 @Service
 @Transactional
 @RequiredArgsConstructor
 public class UserService {
+    private static final String DEFAULT_SORT = "createdAt";
+    private static final Set<String> ALLOWED_SORT_FIELDS = Set.of("id", "userName", "email", "createdAt", "role");
+
     private final UsersRepository usersRepository;
     private final UserConverter userConverter;
 
-    public List<UserGridDto> findAllView() {
-        return usersRepository.findAll().stream().map(userConverter::toGridDto).toList();
+    @Transactional(readOnly = true)
+    public Page<UserGridDto> search(UserSearchForm form, Pageable pageable) {
+        String userNameFilter = form.getUsername() == null ? "" : form.getUsername();
+        String emailFilter = form.getEmail() == null ? "" : form.getEmail();
+        UserRole roleFilter = form.getRole();
+
+        Sort.Direction direction = form.getSortDirection() == null ? Sort.Direction.ASC : form.getSortDirection();
+        String requestedSortBy = form.getSortBy() == null ? DEFAULT_SORT : form.getSortBy();
+        String sortBy = ALLOWED_SORT_FIELDS.contains(requestedSortBy) ? requestedSortBy : DEFAULT_SORT;
+
+        Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(direction, sortBy));
+
+        if(roleFilter == null)
+            return usersRepository
+                    .findByUserNameContainingIgnoreCaseAndEmailContainingIgnoreCase(userNameFilter, emailFilter, sortedPageable)
+                    .map(userConverter::toGridDto);
+
+        return usersRepository
+                .findByUserNameContainingIgnoreCaseAndEmailContainingIgnoreCaseAndRole(userNameFilter, emailFilter, roleFilter, sortedPageable)
+                .map(userConverter::toGridDto);
     }
 
+    @Transactional(readOnly = true)
     public UserFormDto getForm(Long id) {
         return id == null ? new UserFormDto() : userConverter.toFormDto(findById(id));
     }
@@ -43,6 +71,7 @@ public class UserService {
         usersRepository.delete(findById(id));
     }
 
+    @Transactional(readOnly = true)
     public User findById(Long id) {
         return usersRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + id));

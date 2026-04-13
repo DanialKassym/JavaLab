@@ -1,15 +1,17 @@
-package com.springproject.Spring.web.controller.rest;
+package com.springproject.Spring.web.controller.api;
 
 import com.springproject.Spring.service.UserService;
 import com.springproject.Spring.web.dto.form.UserFormDto;
 import com.springproject.Spring.web.dto.grid.UserGridDto;
+import com.springproject.Spring.web.dto.search.UserSearchForm;
 import com.springproject.Spring.web.validations.BindingResultValidationUtils;
 import com.springproject.Spring.web.validations.UserFormValidator;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
@@ -18,10 +20,10 @@ public class UsersRestController {
     private final UserService userService;
     private final UserFormValidator userFormValidator;
 
-
     @GetMapping
-    public List<UserGridDto> read() {
-        return userService.findAllView();
+    public Page<UserGridDto> read(UserSearchForm searchForm,
+                                  @PageableDefault(size = 5) Pageable pageable) {
+        return userService.search(searchForm, pageable);
     }
 
     @PostMapping

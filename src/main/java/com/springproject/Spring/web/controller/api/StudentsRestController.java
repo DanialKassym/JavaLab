@@ -1,12 +1,14 @@
-package com.springproject.Spring.web.controller.rest;
+package com.springproject.Spring.web.controller.api;
 
 import com.springproject.Spring.service.StudentService;
 import com.springproject.Spring.web.dto.form.StudentFormDto;
+import com.springproject.Spring.web.dto.search.StudentSearchForm;
 import com.springproject.Spring.web.dto.view.StudentViewDto;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/students")
@@ -15,8 +17,9 @@ public class StudentsRestController {
     private final StudentService studentService;
 
     @GetMapping
-    public List<StudentViewDto> read() {
-        return studentService.findAllView();
+    public Page<StudentViewDto> read(StudentSearchForm form,
+                                     @PageableDefault(size = 10) Pageable pageable) {
+        return studentService.search(form, pageable);
     }
 
     @PostMapping

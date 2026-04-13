@@ -1,29 +1,34 @@
-package com.springproject.Spring.web.controller.api;
+package com.springproject.Spring.web.controller.mvc;
 
 import com.springproject.Spring.domain.enums.UserRole;
 import com.springproject.Spring.service.UserService;
 import com.springproject.Spring.web.dto.form.UserFormDto;
+import com.springproject.Spring.web.dto.search.UserSearchForm;
 import com.springproject.Spring.web.validations.BindingResultValidationUtils;
 import com.springproject.Spring.web.validations.UserFormValidator;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 @Controller
-@RequestMapping("/users")
 @RequiredArgsConstructor
+@RequestMapping("/users")
 public class UsersController {
     private final UserService userService;
     private final UserFormValidator userFormValidator;
 
     @GetMapping
-    public String read(@RequestParam(name = "id", required = false) Long id, Model model) {
+    public String read(@RequestParam(name = "id", required = false) Long id,
+                       @ModelAttribute("searchForm") UserSearchForm searchForm,
+                       @PageableDefault(size = 5) Pageable pageable,
+                       Model model) {
         model.addAttribute("editMode", id != null);
         model.addAttribute("form", userService.getForm(id));
-        model.addAttribute("users", userService.findAllView());
-        model.addAttribute("roles", UserRole.values());
+        fillCommonAttributes(model, searchForm, pageable);
         return "users";
     }
 
@@ -37,7 +42,7 @@ public class UsersController {
         return "redirect:/users";
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("{id}")
     public String update(@PathVariable Long id, @ModelAttribute("form") UserFormDto form, BindingResult bindingResult, Model model) {
         userFormValidator.validate(form, bindingResult, form.getId());
         if (BindingResultValidationUtils.hasErrors(bindingResult)) {
@@ -48,7 +53,7 @@ public class UsersController {
         return "redirect:/users";
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("{id}")
     public String delete(@PathVariable Long id) {
         userService.delete(id);
         return "redirect:/users";
@@ -56,9 +61,14 @@ public class UsersController {
 
     private String renderFormWithErrors(Model model, UserFormDto form, boolean editMode) {
         model.addAttribute("editMode", editMode);
-        model.addAttribute("users", userService.findAllView());
-        model.addAttribute("roles", UserRole.values());
         model.addAttribute("form", form);
+        fillCommonAttributes(model, new UserSearchForm(), Pageable.ofSize(5));
         return "users";
+    }
+
+    private void fillCommonAttributes(Model model, UserSearchForm form, Pageable pageable) {
+        model.addAttribute("page", userService.search(form, pageable));
+        model.addAttribute("searchForm", form);
+        model.addAttribute("roles", UserRole.values());
     }
 }
