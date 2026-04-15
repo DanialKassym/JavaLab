@@ -22,7 +22,6 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         User user = usersRepository.findByUserName(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
 
-        // Prefix role with ROLE_ so Spring Security can use it as an authority.
         String role = "ROLE_" + user.getRole().name();
 
         return new org.springframework.security.core.userdetails.User(

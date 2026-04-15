@@ -1,18 +1,19 @@
-package com.springproject.Spring.service;
+package kz.iitu.hello.service;
 
-import com.springproject.Spring.domain.entity.User;
-import com.springproject.Spring.domain.enums.UserRole;
-import com.springproject.Spring.domain.repository.UsersRepository;
-import com.springproject.Spring.exception.EntityNotFoundException;
-import com.springproject.Spring.web.converter.UserConverter;
-import com.springproject.Spring.web.dto.form.UserFormDto;
-import com.springproject.Spring.web.dto.grid.UserGridDto;
-import com.springproject.Spring.web.dto.search.UserSearchForm;
+import kz.iitu.hello.domain.entity.User;
+import kz.iitu.hello.domain.enums.UserRole;
+import kz.iitu.hello.domain.repository.UsersRepository;
+import kz.iitu.hello.exception.EntityNotFoundException;
+import kz.iitu.hello.web.converter.UserConverter;
+import kz.iitu.hello.web.dto.form.UserFormDto;
+import kz.iitu.hello.web.dto.grid.UserGridDto;
+import kz.iitu.hello.web.dto.search.UserSearchForm;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +28,7 @@ public class UserService {
 
     private final UsersRepository usersRepository;
     private final UserConverter userConverter;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional(readOnly = true)
     public Page<UserGridDto> search(UserSearchForm form, Pageable pageable) {
@@ -58,6 +60,9 @@ public class UserService {
     public void create(UserFormDto form) {
         User user = new User();
         userConverter.applyFormToEntity(form, user);
+        if (form.getPassword() != null && !form.getPassword().isBlank()) {
+            user.setPassword(passwordEncoder.encode(form.getPassword()));
+        }
         usersRepository.save(user);
     }
 
